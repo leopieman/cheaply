@@ -3,6 +3,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 
+const features = [
+  { icon: '🛒', label: 'Price tracking' },
+  { icon: '🇮🇪', label: 'Irish retailers' },
+  { icon: '🔔', label: 'Deal alerts' },
+]
+
 export function ComingSoon() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
@@ -14,32 +20,42 @@ export function ComingSoon() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 relative overflow-hidden">
-      {/* Subtle background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 pointer-events-none" />
 
-      <div className="relative z-10 max-w-lg w-full text-center space-y-8">
-        {/* Logo / wordmark */}
-        <div className="space-y-3">
-          <Badge variant="outline" className="text-primary border-primary/30 bg-primary/5 px-3 py-1">
-            Ireland's smartest shopping companion
+      {/* Background blobs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-primary/8 blur-3xl animate-pulse" />
+        <div className="absolute -bottom-32 -right-32 w-[400px] h-[400px] rounded-full bg-primary/6 blur-3xl animate-pulse [animation-delay:1.5s]" />
+      </div>
+
+      <div className="relative z-10 max-w-md w-full text-center flex flex-col gap-10">
+
+        {/* Badge */}
+        <div className="flex justify-center animate-fade-in">
+          <Badge
+            variant="outline"
+            className="text-primary border-primary/25 bg-primary/5 px-4 py-1.5 text-xs font-medium tracking-wide uppercase"
+          >
+            Coming soon · Ireland
           </Badge>
+        </div>
 
-          <h1 className="text-6xl font-bold tracking-tight text-foreground">
-            cheaply<span className="text-primary">.ie</span>
+        {/* Wordmark */}
+        <div className="flex flex-col gap-4 animate-fade-in [animation-delay:100ms]">
+          <h1 className="text-7xl font-bold tracking-tight leading-none">
+            <span className="text-foreground/20">cheaply</span>
+            <span className="text-primary">.ie</span>
           </h1>
-
-          <p className="text-muted-foreground text-lg leading-relaxed">
+          <p className="text-muted-foreground text-base leading-relaxed max-w-sm mx-auto">
             Find the best deals across Irish retailers — grocery, tech, fashion and more.
-            Save more. Stress less.
           </p>
         </div>
 
         {/* Email capture */}
-        <div className="space-y-3">
+        <div className="flex flex-col gap-2 animate-fade-in [animation-delay:200ms]">
           {submitted ? (
-            <div className="rounded-xl border border-primary/20 bg-primary/5 px-6 py-4">
-              <p className="text-primary font-medium">You're on the list 🎉</p>
-              <p className="text-muted-foreground text-sm mt-1">We'll let you know when cheaply.ie goes live.</p>
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 px-6 py-5 text-center space-y-1 animate-fade-in">
+              <p className="text-primary font-semibold text-sm">You're on the list 🎉</p>
+              <p className="text-muted-foreground text-xs">We'll ping you the moment cheaply.ie goes live.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex gap-2">
@@ -48,25 +64,24 @@ export function ComingSoon() {
                 placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="flex-1"
+                className="flex-1 h-11"
                 required
               />
-              <Button type="submit">
+              <Button type="submit" className="h-11 px-5 shrink-0">
                 Notify me
               </Button>
             </form>
           )}
-          <p className="text-xs text-muted-foreground">No spam. Just the launch date.</p>
+          <p className="text-xs text-muted-foreground/60">No spam. Just the launch date.</p>
         </div>
 
-        {/* Decorative feature hints */}
-        <div className="grid grid-cols-3 gap-3 pt-4">
-          {[
-            { icon: '🛒', label: 'Price tracking' },
-            { icon: '🇮🇪', label: 'Irish retailers' },
-            { icon: '🔔', label: 'Deal alerts' },
-          ].map(({ icon, label }) => (
-            <div key={label} className="rounded-lg border bg-card p-3 text-center space-y-1">
+        {/* Feature cards */}
+        <div className="grid grid-cols-3 gap-3 animate-fade-in [animation-delay:300ms]">
+          {features.map(({ icon, label }) => (
+            <div
+              key={label}
+              className="rounded-2xl border bg-card/60 backdrop-blur-sm p-4 flex flex-col items-center gap-2 hover:border-primary/30 hover:bg-primary/5 transition-colors duration-200"
+            >
               <span className="text-2xl">{icon}</span>
               <p className="text-xs text-muted-foreground font-medium">{label}</p>
             </div>
@@ -75,7 +90,7 @@ export function ComingSoon() {
       </div>
 
       {/* Footer */}
-      <footer className="absolute bottom-6 text-xs text-muted-foreground">
+      <footer className="absolute bottom-5 text-xs text-muted-foreground/50 animate-fade-in [animation-delay:400ms]">
         © {new Date().getFullYear()} cheaply.ie · Made in Ireland
       </footer>
     </div>
