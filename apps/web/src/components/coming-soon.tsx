@@ -9,13 +9,35 @@ const features = [
   { icon: '🔔', label: 'Deal alerts' },
 ]
 
+const API_URL = import.meta.env.VITE_API_URL ?? ''
+
 export function ComingSoon() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (email) setSubmitted(true)
+    if (!email) return
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(`${API_URL}/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error ?? 'Something went wrong')
+      }
+      setSubmitted(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -66,13 +88,15 @@ export function ComingSoon() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="flex-1 h-11"
                 required
+                disabled={loading}
               />
-              <Button type="submit" className="h-11 px-5 shrink-0">
-                Notify me
+              <Button type="submit" className="h-11 px-5 shrink-0" disabled={loading}>
+                {loading ? 'Sending…' : 'Notify me'}
               </Button>
             </form>
           )}
-          <p className="text-xs text-muted-foreground/60">No spam. Just the launch date.</p>
+          {error && <p className="text-xs text-destructive">{error}</p>}
+          {!error && <p className="text-xs text-muted-foreground/60">No spam. Just the launch date.</p>}
         </div>
 
         {/* Feature cards */}
