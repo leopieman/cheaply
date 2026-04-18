@@ -2,20 +2,57 @@ import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { Resend } from 'resend'
+import postgres from 'postgres'
 
 const {
   RESEND_API_KEY,
   FROM_EMAIL = 'cheaply.ie <onboarding@resend.dev>',
   CORS_ORIGIN = '*',
   PORT = '3000',
+  DATABASE_URL,
 } = process.env
 
 if (!RESEND_API_KEY) {
   console.error('Missing RESEND_API_KEY env var')
   process.exit(1)
 }
+if (!DATABASE_URL) {
+  console.error('Missing DATABASE_URL env var')
+  process.exit(1)
+}
 
 const resend = new Resend(RESEND_API_KEY)
+const sql = postgres(DATABASE_URL, { ssl: 'require' })
+
+await sql`
+  CREATE TABLE IF NOT EXISTS subscribers (
+    id SERIAL PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`
+
+const RATE_LIMIT_WINDOW_MS = 60_000
+const RATE_LIMIT_MAX = 5
+const hits = new Map<string, { count: number; resetAt: number }>()
+
+function rateLimit(ip: string): boolean {
+  const now = Date.now()
+  const entry = hits.get(ip)
+  if (!entry || entry.resetAt < now) {
+    hits.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
+    return true
+  }
+  if (entry.count >= RATE_LIMIT_MAX) return false
+  entry.count++
+  return true
+}
+
+setInterval(() => {
+  const now = Date.now()
+  for (const [ip, entry] of hits) if (entry.resetAt < now) hits.delete(ip)
+}, RATE_LIMIT_WINDOW_MS).unref()
+
 const app = new Hono()
 
 app.use('*', cors({ origin: CORS_ORIGIN }))
@@ -23,11 +60,26 @@ app.use('*', cors({ origin: CORS_ORIGIN }))
 app.get('/', (c) => c.json({ ok: true, service: 'cheaply-api' }))
 
 app.post('/subscribe', async (c) => {
+  const ip = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  if (!rateLimit(ip)) {
+    return c.json({ error: 'Too many requests' }, 429)
+  }
+
   const body = await c.req.json().catch(() => null) as { email?: string } | null
   const email = body?.email?.trim().toLowerCase()
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return c.json({ error: 'Invalid email' }, 400)
+  }
+
+  const inserted = await sql`
+    INSERT INTO subscribers (email) VALUES (${email})
+    ON CONFLICT (email) DO NOTHING
+    RETURNING id
+  `
+
+  if (inserted.length === 0) {
+    return c.json({ ok: true, alreadySubscribed: true })
   }
 
   const { error } = await resend.emails.send({
