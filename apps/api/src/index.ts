@@ -12,6 +12,7 @@ const {
   DATABASE_URL,
   FRONTEND_URL = 'https://cheaply.ie',
   SUPABASE_URL,
+  SUPABASE_ANON_KEY,
 } = process.env
 
 if (!RESEND_API_KEY) {
@@ -68,11 +69,11 @@ app.get('/', (c) => c.json({ ok: true, service: 'cheaply-api' }))
 app.get('/health', async (c) => {
   const [db, supabase, frontend] = await Promise.all([
     sql`SELECT 1`.then(() => ({ ok: true })).catch((err: unknown) => ({ ok: false, error: String(err) })),
-    SUPABASE_URL
-      ? fetch(`${SUPABASE_URL}/auth/v1/health`, { signal: AbortSignal.timeout(5000) })
-          .then(async (r) => ({ ok: r.ok, status: r.status }))
+    SUPABASE_URL && SUPABASE_ANON_KEY
+      ? fetch(`${SUPABASE_URL}/rest/v1/`, { headers: { apikey: SUPABASE_ANON_KEY }, signal: AbortSignal.timeout(5000) })
+          .then((r) => ({ ok: r.ok, status: r.status }))
           .catch((err: unknown) => ({ ok: false, error: String(err) }))
-      : { ok: false, error: 'SUPABASE_URL not configured' },
+      : { ok: false, error: 'SUPABASE_URL or SUPABASE_ANON_KEY not configured' },
     fetch(FRONTEND_URL, { signal: AbortSignal.timeout(5000) })
       .then((r) => ({ ok: r.ok, status: r.status }))
       .catch((err: unknown) => ({ ok: false, error: String(err) })),
