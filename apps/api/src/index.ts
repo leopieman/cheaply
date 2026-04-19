@@ -69,7 +69,7 @@ app.get('/health', async (c) => {
   const [db, supabase, frontend] = await Promise.all([
     sql`SELECT 1`.then(() => ({ ok: true })).catch((err: unknown) => ({ ok: false, error: String(err) })),
     SUPABASE_URL
-      ? fetch(`${SUPABASE_URL}/health`, { signal: AbortSignal.timeout(5000) })
+      ? fetch(`${SUPABASE_URL}/auth/v1/health`, { signal: AbortSignal.timeout(5000) })
           .then(async (r) => ({ ok: r.ok, status: r.status }))
           .catch((err: unknown) => ({ ok: false, error: String(err) }))
       : { ok: false, error: 'SUPABASE_URL not configured' },
