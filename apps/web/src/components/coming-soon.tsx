@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 const features = [
   { icon: '🛒', label: 'Price tracking' },
@@ -50,6 +51,9 @@ export function ComingSoon() {
       </div>
 
       <div className="relative z-10 max-w-md w-full text-center flex flex-col gap-10">
+        <div className="flex justify-center sm:justify-end animate-fade-in">
+          <ThemeToggle />
+        </div>
 
         {/* Badge */}
         <div className="flex justify-center animate-fade-in">
@@ -57,7 +61,7 @@ export function ComingSoon() {
             variant="outline"
             className="text-primary border-primary/25 bg-primary/5 px-4 py-1.5 text-xs font-medium tracking-wide uppercase"
           >
-            Coming soon · Ireland
+            Launching soon · Ireland
           </Badge>
         </div>
 
@@ -68,7 +72,7 @@ export function ComingSoon() {
             <span className="text-primary">.ie</span>
           </h1>
           <p className="text-muted-foreground text-base leading-relaxed max-w-sm mx-auto">
-            Find the best deals across Irish retailers — grocery, tech, fashion and more.
+            Track prices. Catch deals. Buy better across Irish retailers.
           </p>
         </div>
 
@@ -76,8 +80,8 @@ export function ComingSoon() {
         <div className="flex flex-col gap-2 animate-fade-in [animation-delay:200ms]">
           {submitted ? (
             <div className="rounded-2xl border border-primary/20 bg-primary/5 px-6 py-5 text-center space-y-1 animate-fade-in">
-              <p className="text-primary font-semibold text-sm">You're on the list 🎉</p>
-              <p className="text-muted-foreground text-xs">We'll ping you the moment cheaply.ie goes live.</p>
+              <p className="text-primary font-semibold text-sm">You're on the list. Sound. 🎉</p>
+              <p className="text-muted-foreground text-xs">We’ll give you a shout when cheaply.ie goes live.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex gap-2">
@@ -91,12 +95,12 @@ export function ComingSoon() {
                 disabled={loading}
               />
               <Button type="submit" className="h-11 px-5 shrink-0" disabled={loading}>
-                {loading ? 'Sending…' : 'Notify me'}
+                {loading ? 'Joining…' : 'Join the waitlist'}
               </Button>
             </form>
           )}
           {error && <p className="text-xs text-destructive">{error}</p>}
-          {!error && <p className="text-xs text-muted-foreground/60">No spam. Just the launch date.</p>}
+          {!error && <p className="text-xs text-muted-foreground/60">No spam. No messing. Just useful updates.</p>}
         </div>
 
         {/* Feature cards */}
