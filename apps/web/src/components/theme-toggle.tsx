@@ -1,51 +1,25 @@
 import { Monitor, Moon, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 import { useTheme, type Theme } from '@/lib/theme'
 
-const themeOptions: Array<{
-  value: Theme
-  label: string
-  icon: typeof Sun
-}> = [
-  { value: 'light', label: 'Light', icon: Sun },
-  { value: 'dark', label: 'Dark', icon: Moon },
-  { value: 'system', label: 'System', icon: Monitor },
-]
+const cycle: Theme[] = ['light', 'dark', 'system']
+const icons = { light: Sun, dark: Moon, system: Monitor }
 
 export function ThemeToggle() {
-  const { theme, resolvedTheme, setTheme } = useTheme()
+  const { theme, setTheme } = useTheme()
+  const Icon = icons[theme]
+  const next = cycle[(cycle.indexOf(theme) + 1) % cycle.length]
 
   return (
-    <div
-      role="group"
-      aria-label="Theme"
-      className="inline-flex items-center gap-1 rounded-full border border-border/80 bg-background/85 p-1 shadow-sm backdrop-blur-sm"
+    <Button
+      type="button"
+      size="icon"
+      variant="ghost"
+      aria-label={`Switch to ${next} theme`}
+      onClick={() => setTheme(next)}
+      className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
     >
-      {themeOptions.map(({ value, label, icon: Icon }) => {
-        const isActive = theme === value
-
-        return (
-          <Button
-            key={value}
-            type="button"
-            size="xs"
-            variant={isActive ? 'default' : 'ghost'}
-            aria-pressed={isActive}
-            onClick={() => setTheme(value)}
-            className={cn(
-              'rounded-full px-3 text-[11px]',
-              !isActive && 'text-muted-foreground',
-            )}
-          >
-            <Icon className="size-3.5" />
-            <span>{label}</span>
-            {value === 'system' && isActive ? (
-              <span className="text-[10px] opacity-70">({resolvedTheme})</span>
-            ) : null}
-          </Button>
-        )
-      })}
-    </div>
+      <Icon className="size-4" />
+    </Button>
   )
 }
