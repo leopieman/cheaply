@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -12,11 +12,32 @@ const features = [
 
 const API_URL = import.meta.env.VITE_API_URL ?? ''
 
+type HealthStatus = 'loading' | 'ok' | 'degraded' | 'down'
+
+function useHealth() {
+  const [status, setStatus] = useState<HealthStatus>('loading')
+  useEffect(() => {
+    fetch(`${API_URL}/health`)
+      .then((r) => r.json())
+      .then((d) => setStatus(d.ok ? 'ok' : 'degraded'))
+      .catch(() => setStatus('down'))
+  }, [])
+  return status
+}
+
+const statusConfig: Record<HealthStatus, { color: string; label: string }> = {
+  loading: { color: 'bg-muted-foreground/40', label: 'Checking status…' },
+  ok:      { color: 'bg-green-500',           label: 'All systems operational' },
+  degraded:{ color: 'bg-yellow-500',          label: 'Degraded' },
+  down:    { color: 'bg-red-500',             label: 'Service disruption' },
+}
+
 export function ComingSoon() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const health = useHealth()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -118,8 +139,15 @@ export function ComingSoon() {
       </div>
 
       {/* Footer */}
-      <footer className="absolute bottom-5 text-xs text-muted-foreground/50 animate-fade-in [animation-delay:400ms]">
-        © {new Date().getFullYear()} cheaply.ie · Made in Ireland
+      <footer className="absolute bottom-5 w-full px-4 flex items-center justify-between text-xs text-muted-foreground/50 animate-fade-in [animation-delay:400ms]">
+        <span>© {new Date().getFullYear()} cheaply.ie · Made in Ireland</span>
+        <span className="flex items-center gap-1.5">
+          <span className={`relative flex h-2 w-2`}>
+            {health === 'ok' && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-50" />}
+            <span className={`relative inline-flex h-2 w-2 rounded-full ${statusConfig[health].color}`} />
+          </span>
+          <span>{statusConfig[health].label}</span>
+        </span>
       </footer>
     </div>
   )
