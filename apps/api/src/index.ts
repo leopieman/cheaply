@@ -22,15 +22,19 @@ if (!DATABASE_URL) {
 }
 
 const resend = new Resend(RESEND_API_KEY)
-const sql = postgres(DATABASE_URL, { ssl: 'require' })
+const sql = postgres(DATABASE_URL, { ssl: 'require', prepare: false })
 
-await sql`
-  CREATE TABLE IF NOT EXISTS subscribers (
-    id SERIAL PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-  )
-`
+try {
+  await sql`
+    CREATE TABLE IF NOT EXISTS subscribers (
+      id SERIAL PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `
+} catch (err) {
+  console.error('DB init failed (will retry on first request):', err)
+}
 
 const RATE_LIMIT_WINDOW_MS = 60_000
 const RATE_LIMIT_MAX = 5
@@ -72,11 +76,17 @@ app.post('/subscribe', async (c) => {
     return c.json({ error: 'Invalid email' }, 400)
   }
 
-  const inserted = await sql`
-    INSERT INTO subscribers (email) VALUES (${email})
-    ON CONFLICT (email) DO NOTHING
-    RETURNING id
-  `
+  let inserted
+  try {
+    inserted = await sql`
+      INSERT INTO subscribers (email) VALUES (${email})
+      ON CONFLICT (email) DO NOTHING
+      RETURNING id
+    `
+  } catch (err) {
+    console.error('DB error:', err)
+    return c.json({ error: 'Service temporarily unavailable' }, 503)
+  }
 
   if (inserted.length === 0) {
     return c.json({ ok: true, alreadySubscribed: true })
