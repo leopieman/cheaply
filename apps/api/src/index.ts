@@ -10,6 +10,7 @@ const {
   CORS_ORIGIN = '*',
   PORT = '3000',
   DATABASE_URL,
+  FRONTEND_URL = 'https://cheaply.ie',
 } = process.env
 
 if (!RESEND_API_KEY) {
@@ -63,6 +64,18 @@ app.use('*', cors({ origin: CORS_ORIGIN }))
 
 app.get('/', (c) => c.json({ ok: true, service: 'cheaply-api' }))
 
+app.get('/health', async (c) => {
+  const [db, frontend] = await Promise.all([
+    sql`SELECT 1`.then(() => ({ ok: true })).catch((err: unknown) => ({ ok: false, error: String(err) })),
+    fetch(FRONTEND_URL, { signal: AbortSignal.timeout(5000) })
+      .then((r) => ({ ok: r.ok, status: r.status }))
+      .catch((err: unknown) => ({ ok: false, error: String(err) })),
+  ])
+
+  const healthy = db.ok && frontend.ok
+  return c.json({ ok: healthy, api: true, db, frontend }, healthy ? 200 : 503)
+})
+
 app.post('/subscribe', async (c) => {
   const ip = c.req.header('cf-connecting-ip') ?? c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   if (!rateLimit(ip)) {
@@ -114,16 +127,20 @@ function confirmationEmail() {
   <body style="font-family: system-ui, -apple-system, sans-serif; background: #fafafa; margin: 0; padding: 40px 20px;">
     <div style="max-width: 480px; margin: 0 auto; background: #fff; border-radius: 16px; padding: 40px; border: 1px solid #eee;">
       <h1 style="font-size: 28px; margin: 0 0 16px; color: #08060d; letter-spacing: -0.5px;">
-        You're on the list 🎉
+        You're on the list. Sound. 🎉
       </h1>
       <p style="font-size: 16px; line-height: 1.6; color: #555; margin: 0 0 24px;">
-        Thanks for signing up to <strong>cheaply.ie</strong> — Ireland's smartest shopping companion.
+        Thanks for signing up to <strong>cheaply.ie</strong>.
       </p>
       <p style="font-size: 16px; line-height: 1.6; color: #555; margin: 0 0 24px;">
-        We'll ping you the moment we launch with price tracking, deal alerts, and the best prices across Irish retailers.
+        We'll give you a shout when we launch with price tracking, deal alerts, and a handier way to spot better prices across Irish retailers.
+      </p>
+      <p style="font-size: 16px; line-height: 1.6; color: #555; margin: 0 0 24px;">
+        No spam. No messing. Just the useful bits.
       </p>
       <p style="font-size: 14px; color: #999; margin: 32px 0 0;">
-        — The cheaply.ie team · Made in Ireland 🇮🇪
+        Cheers,<br />
+        The cheaply.ie team · Made in Ireland 🇮🇪
       </p>
     </div>
   </body>
