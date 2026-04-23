@@ -9,38 +9,93 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
+import { Route as AdminDashboardIndexRouteImport } from './routes/admin.dashboard.index'
+import { Route as AdminDashboardSubscribersRouteImport } from './routes/admin.dashboard.subscribers'
 
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDashboardIndexRoute = AdminDashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminDashboardRoute,
+} as any)
+const AdminDashboardSubscribersRoute =
+  AdminDashboardSubscribersRouteImport.update({
+    id: '/subscribers',
+    path: '/subscribers',
+    getParentRoute: () => AdminDashboardRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/admin/dashboard': typeof AdminDashboardRouteWithChildren
+  '/admin/dashboard/subscribers': typeof AdminDashboardSubscribersRoute
+  '/admin/dashboard/': typeof AdminDashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/admin/dashboard/subscribers': typeof AdminDashboardSubscribersRoute
+  '/admin/dashboard': typeof AdminDashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/admin/dashboard': typeof AdminDashboardRouteWithChildren
+  '/admin/dashboard/subscribers': typeof AdminDashboardSubscribersRoute
+  '/admin/dashboard/': typeof AdminDashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/admin/dashboard'
+    | '/admin/dashboard/subscribers'
+    | '/admin/dashboard/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/admin' | '/admin/dashboard/subscribers' | '/admin/dashboard'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/admin/dashboard'
+    | '/admin/dashboard/subscribers'
+    | '/admin/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +103,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
+      path: '/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/dashboard/': {
+      id: '/admin/dashboard/'
+      path: '/'
+      fullPath: '/admin/dashboard/'
+      preLoaderRoute: typeof AdminDashboardIndexRouteImport
+      parentRoute: typeof AdminDashboardRoute
+    }
+    '/admin/dashboard/subscribers': {
+      id: '/admin/dashboard/subscribers'
+      path: '/subscribers'
+      fullPath: '/admin/dashboard/subscribers'
+      preLoaderRoute: typeof AdminDashboardSubscribersRouteImport
+      parentRoute: typeof AdminDashboardRoute
+    }
   }
 }
 
+interface AdminDashboardRouteChildren {
+  AdminDashboardSubscribersRoute: typeof AdminDashboardSubscribersRoute
+  AdminDashboardIndexRoute: typeof AdminDashboardIndexRoute
+}
+
+const AdminDashboardRouteChildren: AdminDashboardRouteChildren = {
+  AdminDashboardSubscribersRoute: AdminDashboardSubscribersRoute,
+  AdminDashboardIndexRoute: AdminDashboardIndexRoute,
+}
+
+const AdminDashboardRouteWithChildren = AdminDashboardRoute._addFileChildren(
+  AdminDashboardRouteChildren,
+)
+
+interface AdminRouteChildren {
+  AdminDashboardRoute: typeof AdminDashboardRouteWithChildren
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminDashboardRoute: AdminDashboardRouteWithChildren,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
