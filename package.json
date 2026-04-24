@@ -7,9 +7,13 @@
   "scripts": {
     "dev": "npm run dev --workspace=apps/web",
     "build": "npm run build --workspace=apps/web",
+    "designmd": "designmd",
     "preview": "npm run preview --workspace=apps/web"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "designmd": "^0.2.1"
   }
 }
