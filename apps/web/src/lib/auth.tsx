@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { supabase } from './supabase'
+import { isSupabaseConfigured, supabase } from './supabase'
 
 type AuthContextValue = {
   session: Session | null
@@ -13,9 +13,13 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(Boolean(supabase))
 
   useEffect(() => {
+    if (!supabase) {
+      return
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
       setLoading(false)
@@ -27,11 +31,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   async function signIn(email: string, password: string) {
+    if (!supabase || !isSupabaseConfigured) {
+      return { error: 'Admin auth is not configured for this environment' }
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     return { error: error?.message ?? null }
   }
 
   async function signOut() {
+    if (!supabase) return
+
     await supabase.auth.signOut()
   }
 

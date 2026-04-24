@@ -10,10 +10,16 @@ type Subscriber = { id: number; email: string; created_at: string }
 
 function SubscribersPage() {
   const [rows, setRows] = useState<Subscriber[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(Boolean(supabase))
+  const [error, setError] = useState<string | null>(
+    supabase ? null : 'Supabase is not configured for this environment',
+  )
 
   useEffect(() => {
+    if (!supabase) {
+      return
+    }
+
     supabase
       .from('subscribers')
       .select('id, email, created_at')
